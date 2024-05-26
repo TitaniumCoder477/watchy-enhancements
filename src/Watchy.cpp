@@ -6,6 +6,7 @@ GxEPD2_BW<WatchyDisplay, WatchyDisplay::HEIGHT> Watchy::display(
 
 RTC_DATA_ATTR int guiState;
 RTC_DATA_ATTR int menuIndex;
+RTC_DATA_ATTR int emitterMenuIndex;
 RTC_DATA_ATTR BMA423 sensor;
 RTC_DATA_ATTR bool WIFI_CONFIGURED;
 RTC_DATA_ATTR bool BLE_CONFIGURED;
@@ -16,6 +17,8 @@ RTC_DATA_ATTR bool alreadyInMenu         = true;
 RTC_DATA_ATTR tmElements_t bootTime;
 RTC_DATA_ATTR uint32_t lastIPAddress;
 RTC_DATA_ATTR char lastSSID[30];
+
+const char serverHostname[] = "192.168.1.18";
 
 void Watchy::init(String datetime) {
   esp_sleep_wakeup_cause_t wakeup_reason;
@@ -41,6 +44,14 @@ void Watchy::init(String datetime) {
       break;
     case MAIN_MENU_STATE:
       // Return to watchface if in menu for more than one tick
+      if (alreadyInMenu) {
+        guiState = WATCHFACE_STATE;
+        showWatchFace(false);
+      } else {
+        alreadyInMenu = true;
+      }
+      break;
+    case EMITTER_MENU_STATE:
       if (alreadyInMenu) {
         guiState = WATCHFACE_STATE;
         showWatchFace(false);
@@ -90,17 +101,15 @@ void Watchy::handleButtonPress() {
   uint64_t wakeupBit = esp_sleep_get_ext1_wakeup_status();
   // Menu Button
   if (wakeupBit & MENU_BTN_MASK) {
-    if (guiState ==
-        WATCHFACE_STATE) { // enter menu state if coming from watch face
+    if (guiState == WATCHFACE_STATE) { // enter menu state if coming from watch face
       showMenu(menuIndex, false);
-    } else if (guiState ==
-               MAIN_MENU_STATE) { // if already in menu, then select menu item
+    } else if (guiState == MAIN_MENU_STATE) { // if already in menu, then select menu item
       switch (menuIndex) {
       case 0:
         showAbout();
         break;
       case 1:
-        showBuzz();
+        showUltrasonicEmitterMenu(emitterMenuIndex, false);
         break;
       case 2:
         showAccelerometer();
@@ -122,6 +131,38 @@ void Watchy::handleButtonPress() {
       }
     } else if (guiState == FW_UPDATE_STATE) {
       updateFWBegin();
+    } else if (guiState == EMITTER_MENU_STATE) {
+      switch (emitterMenuIndex) {
+        case 0:
+          Serial.println("INFO: User selected Server>");
+          break;
+        case 1:
+          Serial.println("INFO: User selected Nodes>");
+          break;
+        case 2:
+          Serial.println("INFO: User selected All>");
+          break;
+        case 3:
+          Serial.println("INFO: User selected 30s>");
+          issue30sCommand();  
+          issueOnCommand();
+          break;
+        case 4:
+          Serial.println("INFO: User selected 1m");
+          issue60sCommand();
+          issueOnCommand();
+          break;
+        case 5:
+          Serial.println("INFO: User selected On");
+          issueOnCommand();
+          break;
+        case 6:
+          Serial.println("INFO: User selected Off");
+          issueOffCommand();
+          break;
+        default:
+          break;
+      }
     }
   }
   // Back Button
@@ -129,6 +170,8 @@ void Watchy::handleButtonPress() {
     if (guiState == MAIN_MENU_STATE) { // exit to watch face if already in menu
       RTC.read(currentTime);
       showWatchFace(false);
+    } else if (guiState == EMITTER_MENU_STATE) {
+      showMenu(menuIndex, false);  // exit to menu if already in app
     } else if (guiState == APP_STATE) {
       showMenu(menuIndex, false); // exit to menu if already in app
     } else if (guiState == FW_UPDATE_STATE) {
@@ -145,6 +188,12 @@ void Watchy::handleButtonPress() {
         menuIndex = MENU_LENGTH - 1;
       }
       showMenu(menuIndex, true);
+    } else if (guiState == EMITTER_MENU_STATE) {
+      emitterMenuIndex--;
+      if (emitterMenuIndex < 0) {
+        emitterMenuIndex = MENU_LENGTH - 1;
+      }
+      showUltrasonicEmitterMenu(emitterMenuIndex, true);
     } else if (guiState == WATCHFACE_STATE) {
       return;
     }
@@ -157,6 +206,12 @@ void Watchy::handleButtonPress() {
         menuIndex = 0;
       }
       showMenu(menuIndex, true);
+    } else if (guiState == EMITTER_MENU_STATE) {  // decrement menu index
+      emitterMenuIndex++;
+      if (emitterMenuIndex > MENU_LENGTH - 1) {
+        emitterMenuIndex = 0;
+      }
+      showUltrasonicEmitterMenu(emitterMenuIndex, true);
     } else if (guiState == WATCHFACE_STATE) {
       return;
     }
@@ -175,14 +230,13 @@ void Watchy::handleButtonPress() {
     } else {
       if (digitalRead(MENU_BTN_PIN) == 1) {
         lastTimeout = millis();
-        if (guiState ==
-            MAIN_MENU_STATE) { // if already in menu, then select menu item
+        if (guiState == MAIN_MENU_STATE) { // if already in menu, then select menu item
           switch (menuIndex) {
           case 0:
             showAbout();
             break;
           case 1:
-            showBuzz();
+            showUltrasonicEmitterMenu(emitterMenuIndex, false);
             break;
           case 2:
             showAccelerometer();
@@ -204,6 +258,42 @@ void Watchy::handleButtonPress() {
           }
         } else if (guiState == FW_UPDATE_STATE) {
           updateFWBegin();
+        } else if (guiState == EMITTER_MENU_STATE) {
+          switch (emitterMenuIndex) {
+            case 0:
+              Serial.println("INFO: User selected Server>");
+              break;
+            case 1:
+              Serial.println("INFO: User selected Nodes>");
+              break;
+            case 2:
+              Serial.println("INFO: User selected All>");
+              break;
+            case 3:
+              Serial.println("INFO: User selected 30s>");
+              issue30sCommand();  
+              issueOnCommand();
+              timeout = true;
+              break;
+            case 4:
+              Serial.println("INFO: User selected 1m");
+              issue60sCommand();
+              issueOnCommand();
+              timeout = true;
+              break;
+            case 5:
+              Serial.println("INFO: User selected On");
+              issueOnCommand();
+              timeout = true;
+              break;
+            case 6:
+              Serial.println("INFO: User selected Off");
+              issueOffCommand();
+              timeout = true;
+              break;
+            default:
+              break;
+          }
         }
       } else if (digitalRead(BACK_BTN_PIN) == 1) {
         lastTimeout = millis();
@@ -212,6 +302,8 @@ void Watchy::handleButtonPress() {
           RTC.read(currentTime);
           showWatchFace(false);
           break; // leave loop
+        } else if (guiState == EMITTER_MENU_STATE) {
+          showMenu(menuIndex, false);  // exit to menu if already in app
         } else if (guiState == APP_STATE) {
           showMenu(menuIndex, false); // exit to menu if already in app
         } else if (guiState == FW_UPDATE_STATE) {
@@ -225,6 +317,12 @@ void Watchy::handleButtonPress() {
             menuIndex = MENU_LENGTH - 1;
           }
           showFastMenu(menuIndex);
+        } else if (guiState == EMITTER_MENU_STATE) {  // increment menu index
+          emitterMenuIndex--;
+          if (emitterMenuIndex < 0) {
+            emitterMenuIndex = MENU_LENGTH - 1;
+          }
+          showFastUltrasonicEmitterMenu(emitterMenuIndex);
         }
       } else if (digitalRead(DOWN_BTN_PIN) == 1) {
         lastTimeout = millis();
@@ -234,10 +332,108 @@ void Watchy::handleButtonPress() {
             menuIndex = 0;
           }
           showFastMenu(menuIndex);
+        } else if (guiState == EMITTER_MENU_STATE) {  // decrement menu index
+          emitterMenuIndex++;
+          if (emitterMenuIndex > MENU_LENGTH - 1) {
+            emitterMenuIndex = 0;
+          }
+          showFastUltrasonicEmitterMenu(emitterMenuIndex);
         }
       }
     }
   }
+}
+
+void Watchy::issue30sCommand() {
+  if (connectWiFi()) {
+    Serial.println("INFO: Preparing POST request...");
+    HTTPClient http;
+    http.setConnectTimeout(3000);
+    http.begin(serverHostname, 5000, "/exp?seconds=30");
+    http.addHeader("Content-Type","text/plain");
+    Serial.println("INFO: Sending 30 second expiration request...");
+    int httpCode = http.POST("Hello world!");
+    http.end();
+    if (httpCode == 200)
+      Serial.println("INFO: Expiration request successfully received.");
+    else
+      Serial.printf("WARN: Expiration request failed, error: %s\n", http.errorToString(httpCode).c_str());
+  } else {
+    Serial.println("ERROR: Could not connect wifi!");
+  }
+  WiFi.mode(WIFI_OFF);
+  btStop();
+}
+
+void Watchy::issue60sCommand() {
+  if (connectWiFi()) {
+    Serial.println("INFO: Preparing POST request...");
+    HTTPClient http;
+    http.setConnectTimeout(3000);
+    http.begin(serverHostname, 5000, "/exp?seconds=60");
+    http.addHeader("Content-Type","text/plain");
+    Serial.println("INFO: Sending 60 second expiration request...");
+    int httpCode = http.POST("Hello world!");
+    http.end();
+    if (httpCode == 200)
+      Serial.println("INFO: Expiration request successfully received.");
+    else
+      Serial.printf("WARN: Expiration request failed, error: %s\n", http.errorToString(httpCode).c_str());
+  } else {
+    Serial.println("ERROR: Could not connect wifi!");
+  }
+  WiFi.mode(WIFI_OFF);
+  btStop();
+}
+
+void Watchy::issueOnCommand() {
+  if (connectWiFi()) {
+    try {
+      Serial.println("INFO: Preparing POST request...");
+      HTTPClient http;
+      http.setConnectTimeout(3000);
+      http.begin(serverHostname, 5000, "/on");
+      http.addHeader("Content-Type","text/plain");
+      Serial.println("INFO: Sending POST request...");
+      int httpCode = http.POST("Hello world!");
+      http.end();
+      if (httpCode > 0)
+        Serial.printf("INFO: POST... code %d\n", httpCode);
+      else
+        Serial.printf("WARN: POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    } catch(...) {
+      Serial.println("ERROR: We encountered an exception!");
+    }
+  } else {
+    Serial.println("ERROR: Could not connect wifi!");
+  }
+  WiFi.mode(WIFI_OFF);
+  btStop();
+}
+
+void Watchy::issueOffCommand() {
+  if (connectWiFi()) {
+    try {
+      Serial.println("INFO: Preparing POST request...");
+      HTTPClient http;
+      http.setConnectTimeout(3000);
+      http.begin(serverHostname, 5000, "/off");
+      http.addHeader("Content-Type","text/plain");
+      Serial.println("INFO: Sending POST request...");
+      int httpCode = http.POST("Hello world!");
+      http.end();
+      if (httpCode > 0)
+        Serial.printf("INFO: POST... code %d\n", httpCode);
+      else
+        Serial.printf("WARN: POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    } catch(...) {
+      Serial.println("ERROR: We encountered an exception!");
+    }
+  } else {
+    Serial.println("ERROR: Could not connect wifi!");
+  }
+  WiFi.mode(WIFI_OFF);
+  btStop();
 }
 
 void Watchy::showMenu(byte menuIndex, bool partialRefresh) {
@@ -250,7 +446,7 @@ void Watchy::showMenu(byte menuIndex, bool partialRefresh) {
   int16_t yPos;
 
   const char *menuItems[] = {
-      "About Watchy", "Vibrate Motor", "Show Accelerometer",
+      "About Watchy", "Ultrasonic Emitter", "Show Accelerometer",
       "Set Time",     "Setup WiFi",    "Update Firmware",
       "Sync NTP"};
   for (int i = 0; i < MENU_LENGTH; i++) {
@@ -283,7 +479,7 @@ void Watchy::showFastMenu(byte menuIndex) {
   int16_t yPos;
 
   const char *menuItems[] = {
-      "About Watchy", "Vibrate Motor", "Show Accelerometer",
+      "About Watchy", "Ultrasonic Emitter", "Show Accelerometer",
       "Set Time",     "Setup WiFi",    "Update Firmware",
       "Sync NTP"};
   for (int i = 0; i < MENU_LENGTH; i++) {
@@ -303,6 +499,65 @@ void Watchy::showFastMenu(byte menuIndex) {
   display.display(true);
 
   guiState = MAIN_MENU_STATE;
+}
+
+void Watchy::showUltrasonicEmitterMenu(byte emitterMenuIndex, bool partialRefresh) {
+  display.setFullWindow();
+  display.fillScreen(GxEPD_BLACK);
+  display.setFont(&FreeMonoBold9pt7b);
+
+  int16_t x1, y1;
+  uint16_t w, h;
+  int16_t yPos;
+
+  const char *menuItems[] = {"Server>", "Nodes>", "All>", "30s",
+                             "1m",      "On",     "Off"};
+  for (int i = 0; i < MENU_LENGTH; i++) {
+    yPos = MENU_HEIGHT + (MENU_HEIGHT * i);
+    display.setCursor(0, yPos);
+    if (i == emitterMenuIndex) {
+      display.getTextBounds(menuItems[i], 0, yPos, &x1, &y1, &w, &h);
+      display.fillRect(x1 - 1, y1 - 10, 200, h + 15, GxEPD_WHITE);
+      display.setTextColor(GxEPD_BLACK);
+      display.println(menuItems[i]);
+    } else {
+      display.setTextColor(GxEPD_WHITE);
+      display.println(menuItems[i]);
+    }
+  }
+
+  display.display(partialRefresh);
+  guiState = EMITTER_MENU_STATE;
+  alreadyInMenu = false;
+}
+
+void Watchy::showFastUltrasonicEmitterMenu(byte emitterMenuIndex) {
+  display.setFullWindow();
+  display.fillScreen(GxEPD_BLACK);
+  display.setFont(&FreeMonoBold9pt7b);
+
+  int16_t x1, y1;
+  uint16_t w, h;
+  int16_t yPos;
+
+  const char *menuItems[] = {"Server>", "Nodes>", "All>", "30s",
+                             "1m",      "On",     "Off"};
+  for (int i = 0; i < MENU_LENGTH; i++) {
+    yPos = MENU_HEIGHT + (MENU_HEIGHT * i);
+    display.setCursor(0, yPos);
+    if (i == emitterMenuIndex) {
+      display.getTextBounds(menuItems[i], 0, yPos, &x1, &y1, &w, &h);
+      display.fillRect(x1 - 1, y1 - 10, 200, h + 15, GxEPD_WHITE);
+      display.setTextColor(GxEPD_BLACK);
+      display.println(menuItems[i]);
+    } else {
+      display.setTextColor(GxEPD_WHITE);
+      display.println(menuItems[i]);
+    }
+  }
+
+  display.display(true);
+  guiState = EMITTER_MENU_STATE;
 }
 
 void Watchy::showAbout() {

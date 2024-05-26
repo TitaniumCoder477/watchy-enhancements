@@ -63,6 +63,7 @@ avr-toolchain-*.zip
 /arduino-core/nbproject/private/
 /app/build/
 /arduino-core/build/
+examples/WatchFaces/7_SEG/openweathermapkey.h
 
 manifest.mf
 nbbuild.xml

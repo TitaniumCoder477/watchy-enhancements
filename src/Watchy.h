@@ -63,6 +63,12 @@ public:
   virtual void handleButtonPress();
   void showMenu(byte menuIndex, bool partialRefresh);
   void showFastMenu(byte menuIndex);
+  void showUltrasonicEmitterMenu(byte emitterMenuIndex, bool partialRefresh);
+  void showFastUltrasonicEmitterMenu(byte emitterMenuIndex);
+  void issue30sCommand();
+  void issue60sCommand();
+  void issueOnCommand();
+  void issueOffCommand();
   void showAbout();
   void showBuzz();
   void showAccelerometer();
@@ -94,6 +100,7 @@ private:
 
 extern RTC_DATA_ATTR int guiState;
 extern RTC_DATA_ATTR int menuIndex;
+extern RTC_DATA_ATTR int emitterMenuIndex;
 extern RTC_DATA_ATTR BMA423 sensor;
 extern RTC_DATA_ATTR bool WIFI_CONFIGURED;
 extern RTC_DATA_ATTR bool BLE_CONFIGURED;
