@@ -65,6 +65,8 @@ public:
   void showFastMenu(byte menuIndex);
   void showUltrasonicEmitterMenu(byte emitterMenuIndex, bool partialRefresh);
   void showFastUltrasonicEmitterMenu(byte emitterMenuIndex);
+  void issueRebootServerCommand();
+  void issueRebootNodesCommand();
   void issue30sCommand();
   void issue60sCommand();
   void issueOnCommand();

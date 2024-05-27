@@ -135,12 +135,16 @@ void Watchy::handleButtonPress() {
       switch (emitterMenuIndex) {
         case 0:
           Serial.println("INFO: User selected Server>");
+          issueRebootServerCommand();
           break;
         case 1:
           Serial.println("INFO: User selected Nodes>");
+          issueRebootNodesCommand();
           break;
         case 2:
           Serial.println("INFO: User selected All>");
+          issueRebootNodesCommand();
+          issueRebootServerCommand();
           break;
         case 3:
           Serial.println("INFO: User selected 30s>");
@@ -262,12 +266,16 @@ void Watchy::handleButtonPress() {
           switch (emitterMenuIndex) {
             case 0:
               Serial.println("INFO: User selected Server>");
+              issueRebootServerCommand();
               break;
             case 1:
               Serial.println("INFO: User selected Nodes>");
+              issueRebootNodesCommand();
               break;
             case 2:
               Serial.println("INFO: User selected All>");
+              issueRebootNodesCommand();
+              issueRebootServerCommand();
               break;
             case 3:
               Serial.println("INFO: User selected 30s>");
@@ -342,6 +350,48 @@ void Watchy::handleButtonPress() {
       }
     }
   }
+}
+
+void Watchy::issueRebootServerCommand() {
+  if (connectWiFi()) {
+    Serial.println("INFO: Preparing POST request...");
+    HTTPClient http;
+    http.setConnectTimeout(3000);
+    http.begin(serverHostname, 5000, "/reboot?target=server");
+    http.addHeader("Content-Type","text/plain");
+    Serial.println("INFO: Requesting reboot of server...");
+    int httpCode = http.POST("Hello world!");
+    http.end();
+    if (httpCode == 200)
+      Serial.println("INFO: Reboot request successfully received.");
+    else
+      Serial.printf("WARN: Reboot request failed, error: %s\n", http.errorToString(httpCode).c_str());
+  } else {
+    Serial.println("ERROR: Could not connect wifi!");
+  }
+  WiFi.mode(WIFI_OFF);
+  btStop();
+}
+
+void Watchy::issueRebootNodesCommand() {
+  if (connectWiFi()) {
+    Serial.println("INFO: Preparing POST request...");
+    HTTPClient http;
+    http.setConnectTimeout(3000);
+    http.begin(serverHostname, 5000, "/reboot?target=nodes");
+    http.addHeader("Content-Type","text/plain");
+    Serial.println("INFO: Requesting reboot of nodes...");
+    int httpCode = http.POST("Hello world!");
+    http.end();
+    if (httpCode == 200)
+      Serial.println("INFO: Reboot request successfully received.");
+    else
+      Serial.printf("WARN: Reboot request failed, error: %s\n", http.errorToString(httpCode).c_str());
+  } else {
+    Serial.println("ERROR: Could not connect wifi!");
+  }
+  WiFi.mode(WIFI_OFF);
+  btStop();
 }
 
 void Watchy::issue30sCommand() {
