@@ -9,30 +9,25 @@
   </a>
 </p>
 
-> My personal collection of enhancements to the Watchy features and various watch faces
+> A modification of the Watchy menu system to add ultrasonic emitter control functionality
 
 ## What is the project?
 
-This is really a collection of enhancements. It is a fork of my Ultrasonic Emitter Watchy repo since I need that feature as well.
+The Ultrasonic Emitter Watchy is a modification of the Watchy menu system that facilitates simple commands to the Ultrasonic Emitter Node via the Ultrasonic Emitter Server.
 
-For the Ultrasonic Emitter README file as of 6/14/2024 see README-ULTRASONIC-EMITTER.md
 For the Watchy README file as of 5/26/2024 see README-WATCHY.md
 
 ## What is the MVP?
 
-* Customization of the 7_SEG face
-* Use of right side buttons from main display to invoke timer flow
-* Timer flow to allow increase and decrease of timer minutes or setting to 0 to cancel
-* Timer to vibrate and invert display for 7 seconds
-* Top left button from main display to snooze timer for 5 minutes
+The minimal valuable product is software that provides on and off commands.
 
 ## What are the nice to haves?
 
-* Ummm
+The nice to haves for this project are mechanisms to obtain the current state, turn the emitter on for a limited period of time, and reboot the server and node remotely.
 
 ## When will the project be complete?
 
-Whenever I get tired of adding enhancements!
+The project will be complete once the app is successfully issuing commands to the Server.
 
 ## Author
 
