@@ -13,7 +13,7 @@
 
 ## What is the project?
 
-This is really a collection of enhancements. It is a fork of my Ultrasonic Emitter Watchy repo since I need that feature as well.
+This is really a collection of enhancements more than a project per say. It is also a fork of my Ultrasonic Emitter Watchy repo since I need that feature too.
 
 For the Ultrasonic Emitter README file as of 6/14/2024 see README-ULTRASONIC-EMITTER.md
 For the Watchy README file as of 5/26/2024 see README-WATCHY.md
