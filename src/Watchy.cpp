@@ -33,34 +33,34 @@ void Watchy::init(String datetime) {
   case ESP_SLEEP_WAKEUP_EXT0: // RTC Alarm
     RTC.read(currentTime);
     switch (guiState) {
-    case WATCHFACE_STATE:
-      showWatchFace(true); // partial updates on tick
-      if (settings.vibrateOClock) {
-        if (currentTime.Minute == 0) {
-          // The RTC wakes us up once per minute
-          vibMotor(75, 4);
+      case WATCHFACE_STATE:
+        showWatchFace(true); // partial updates on tick
+        if (settings.vibrateOClock) {
+          if (currentTime.Minute == 0) {
+            // The RTC wakes us up once per minute
+            vibMotor(75, 4);
+          }
         }
+        break;
+      case MAIN_MENU_STATE:
+        // Return to watchface if in menu for more than one tick
+        if (alreadyInMenu) {
+          guiState = WATCHFACE_STATE;
+          showWatchFace(false);
+        } else {
+          alreadyInMenu = true;
+        }
+        break;
+      case EMITTER_MENU_STATE:
+        if (alreadyInMenu) {
+          guiState = WATCHFACE_STATE;
+          showWatchFace(false);
+        } else {
+          alreadyInMenu = true;
+        }
+        break;
       }
       break;
-    case MAIN_MENU_STATE:
-      // Return to watchface if in menu for more than one tick
-      if (alreadyInMenu) {
-        guiState = WATCHFACE_STATE;
-        showWatchFace(false);
-      } else {
-        alreadyInMenu = true;
-      }
-      break;
-    case EMITTER_MENU_STATE:
-      if (alreadyInMenu) {
-        guiState = WATCHFACE_STATE;
-        showWatchFace(false);
-      } else {
-        alreadyInMenu = true;
-      }
-      break;
-    }
-    break;
   case ESP_SLEEP_WAKEUP_EXT1: // button Press
     handleButtonPress();
     break;
@@ -199,7 +199,8 @@ void Watchy::handleButtonPress() {
       }
       showUltrasonicEmitterMenu(emitterMenuIndex, true);
     } else if (guiState == WATCHFACE_STATE) {
-      return;
+      minutesCountdown++;
+      delay(250);      
     }
   }
   // Down Button
@@ -217,7 +218,10 @@ void Watchy::handleButtonPress() {
       }
       showUltrasonicEmitterMenu(emitterMenuIndex, true);
     } else if (guiState == WATCHFACE_STATE) {
-      return;
+      if (minutesCountdown > 0) {
+        minutesCountdown--;
+        delay(250);
+      }
     }
   }
 
@@ -331,6 +335,8 @@ void Watchy::handleButtonPress() {
             emitterMenuIndex = MENU_LENGTH - 1;
           }
           showFastUltrasonicEmitterMenu(emitterMenuIndex);
+        } else if (guiState == WATCHFACE_STATE) {
+          return;
         }
       } else if (digitalRead(DOWN_BTN_PIN) == 1) {
         lastTimeout = millis();
@@ -346,6 +352,8 @@ void Watchy::handleButtonPress() {
             emitterMenuIndex = 0;
           }
           showFastUltrasonicEmitterMenu(emitterMenuIndex);
+        } else if (guiState == WATCHFACE_STATE) {
+          return;
         }
       }
     }
