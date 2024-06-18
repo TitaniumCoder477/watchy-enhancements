@@ -18,13 +18,20 @@ This is really a collection of enhancements more than a project per say. It is a
 For the Ultrasonic Emitter README file as of 6/14/2024 see README-ULTRASONIC-EMITTER.md
 For the Watchy README file as of 5/26/2024 see README-WATCHY.md
 
+Figure 1: Here is a picture of the customized display, including special timer
+
+* Re-arrangement of watch face.
+* Elimination of unnecessary items like year, word day of week, and steps.
+* Addition of time functionality.
+
+<img alt="Picture of Watchy display" src="IMG_20240618_104808.jpg" width="20%" />
+
 ## What is the MVP?
 
-* Customization of the 7_SEG face
-* Use of right side buttons from main display to invoke timer flow
-* Timer flow to allow increase and decrease of timer minutes or setting to 0 to cancel
-* Timer to vibrate and invert display for 7 seconds
-* Top left button from main display to snooze timer for 5 minutes
+* Customization of the 7_SEG face DONE
+* Use of right side buttons from main display to invoke timer flow DONE
+* Timer to vibrate for 7 seconds DONE
+* Top left button from main display to snooze timer for +5 minutes DONE
 
 ## What are the nice to haves?
 

@@ -181,7 +181,9 @@ void Watchy::handleButtonPress() {
     } else if (guiState == FW_UPDATE_STATE) {
       showMenu(menuIndex, false); // exit to menu if already in app
     } else if (guiState == WATCHFACE_STATE) {
-      return;
+      minutesCountdown += 5;
+      Serial.println("DEBUG: Back button pressed from watch face. minutesCountdown is now " + String(minutesCountdown));
+      delay(250);
     }
   }
   // Up Button
