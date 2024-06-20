@@ -182,8 +182,9 @@ void Watchy::handleButtonPress() {
       showMenu(menuIndex, false); // exit to menu if already in app
     } else if (guiState == WATCHFACE_STATE) {
       minutesCountdown += 5;
-      Serial.println("DEBUG: Back button pressed from watch face. minutesCountdown is now " + String(minutesCountdown));
-      delay(250);
+      Serial.println("INFO: Back button pressed from watch face. minutesCountdown is now " + String(minutesCountdown));
+      vibMotor(75, 2);
+      delay(100);
     }
   }
   // Up Button
@@ -202,7 +203,9 @@ void Watchy::handleButtonPress() {
       showUltrasonicEmitterMenu(emitterMenuIndex, true);
     } else if (guiState == WATCHFACE_STATE) {
       minutesCountdown++;
-      delay(250);      
+      Serial.println("INFO: Up button pressed from watch face. minutesCountdown is now " + String(minutesCountdown));
+      vibMotor(75, 2);
+      delay(100);      
     }
   }
   // Down Button
@@ -222,7 +225,9 @@ void Watchy::handleButtonPress() {
     } else if (guiState == WATCHFACE_STATE) {
       if (minutesCountdown > 0) {
         minutesCountdown--;
-        delay(250);
+        Serial.println("INFO: Down button pressed from watch face. minutesCountdown is now " + String(minutesCountdown));
+        vibMotor(75, 2);
+        delay(100);
       }
     }
   }
@@ -322,6 +327,8 @@ void Watchy::handleButtonPress() {
           showMenu(menuIndex, false); // exit to menu if already in app
         } else if (guiState == FW_UPDATE_STATE) {
           showMenu(menuIndex, false); // exit to menu if already in app
+        } else if (guiState == WATCHFACE_STATE) {
+          return;
         }
       } else if (digitalRead(UP_BTN_PIN) == 1) {
         lastTimeout = millis();

@@ -54,6 +54,7 @@ void Watchy7SEG::drawCountdown() {
         vibMotor(75, 12);
         delay(1000);
         vibMotor(75, 12);
+        delay(1000);
         vibMotor(75, 12);
         delay(1000);
         vibMotor(75, 12);
