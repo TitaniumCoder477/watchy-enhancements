@@ -36,7 +36,7 @@ Figure 1: Here is a picture of the customized display, including special timer
 
 ## What are the nice to haves?
 
-* Ummm
+* Buzz when time added by button press DONE
 
 ## When will the project be complete?
 
