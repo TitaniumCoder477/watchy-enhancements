@@ -9,7 +9,6 @@ const uint8_t WEATHER_ICON_WIDTH = 48;
 const uint8_t WEATHER_ICON_HEIGHT = 32;
 
 RTC_DATA_ATTR int minutesCountdown = 0;
-RTC_DATA_ATTR int8_t temperature = 0;
 
 void Watchy7SEG::drawWatchFace(){
     display.fillScreen(DARKMODE ? GxEPD_BLACK : GxEPD_WHITE);
@@ -140,24 +139,24 @@ void Watchy7SEG::drawBattery(){
     }
 }
 
-void Watchy7SEG::drawWeather() {
+void Watchy7SEG::drawWeather(){
 
+    weatherData currentWeather = getWeatherData();
+
+    int8_t temperature = currentWeather.temperature;
+    int16_t weatherConditionCode = currentWeather.weatherConditionCode;
+
+    display.setFont(&DSEG7_Classic_Regular_39);
+    int16_t  x1, y1;
+    uint16_t w, h;
+    display.setFont(&DSEG7_Classic_Bold_25);
+    display.getTextBounds(String(temperature), 0, 0, &x1, &y1, &w, &h);
+    display.setCursor(5, 200 - 5 - h - y1);
+    display.println(temperature);
+    display.drawBitmap(5 + w + x1 + 5, 170, currentWeather.isMetric ? celsius : fahrenheit, 26, 20, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
     const unsigned char* weatherIcon;
 
     if(WIFI_CONFIGURED){
-      weatherData currentWeather = getWeatherData();
-      temperature = currentWeather.temperature;
-      int16_t weatherConditionCode = currentWeather.weatherConditionCode;
-
-      display.setFont(&DSEG7_Classic_Regular_39);
-      int16_t  x1, y1;
-      uint16_t w, h;
-      display.setFont(&DSEG7_Classic_Bold_25);
-      display.getTextBounds(String(temperature), 0, 0, &x1, &y1, &w, &h);
-      display.setCursor(5, 200 - 5 - h - y1);
-      display.println(temperature);
-      display.drawBitmap(5 + w + x1 + 5, 170, currentWeather.isMetric ? celsius : fahrenheit, 26, 20, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
-    
       //https://openweathermap.org/weather-conditions
       if(weatherConditionCode > 801) {//Cloudy
         weatherIcon = cloudy;
